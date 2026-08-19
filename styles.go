@@ -3131,31 +3131,33 @@ func (f *File) extractCondFmtColorScale(c *xlsxCfRule, extLst *xlsxExtLst) Condi
 	format.Type, format.Criteria = "2_color_scale", "="
 	values := len(c.ColorScale.Cfvo)
 	colors := len(c.ColorScale.Color)
-	if colors > 1 && values > 1 {
-		format.MinType = c.ColorScale.Cfvo[0].Type
-		if c.ColorScale.Cfvo[0].Val != "0" {
-			format.MinValue = c.ColorScale.Cfvo[0].Val
-		}
-		format.MinColor = "#" + f.getThemeColor(c.ColorScale.Color[0])
-		format.MaxType = c.ColorScale.Cfvo[1].Type
-		if c.ColorScale.Cfvo[1].Val != "0" {
-			format.MaxValue = c.ColorScale.Cfvo[1].Val
-		}
-		format.MaxColor = "#" + f.getThemeColor(c.ColorScale.Color[1])
+	if colors < 2 || values < 2 {
+		return format
 	}
-	if colors == 3 {
+	// First stop (minimum).
+	format.MinType = c.ColorScale.Cfvo[0].Type
+	if c.ColorScale.Cfvo[0].Val != "0" {
+		format.MinValue = c.ColorScale.Cfvo[0].Val
+	}
+	format.MinColor = "#" + f.getThemeColor(c.ColorScale.Color[0])
+	// A three-color scale carries a middle stop between the first and last;
+	// the maximum stop is always the final cfvo/color pair, so index it by
+	// the color count rather than assuming the second stop is the maximum
+	// (which mislabeled the middle value as the maximum value).
+	if colors == 3 && values > 2 {
 		format.Type = "3_color_scale"
 		format.MidType = c.ColorScale.Cfvo[1].Type
 		if c.ColorScale.Cfvo[1].Val != "0" {
 			format.MidValue = c.ColorScale.Cfvo[1].Val
 		}
 		format.MidColor = "#" + f.getThemeColor(c.ColorScale.Color[1])
-		format.MaxType = c.ColorScale.Cfvo[2].Type
-		if c.ColorScale.Cfvo[2].Val != "0" {
-			format.MaxValue = c.ColorScale.Cfvo[2].Val
-		}
-		format.MaxColor = "#" + f.getThemeColor(c.ColorScale.Color[2])
 	}
+	maxIdx := colors - 1
+	format.MaxType = c.ColorScale.Cfvo[maxIdx].Type
+	if c.ColorScale.Cfvo[maxIdx].Val != "0" {
+		format.MaxValue = c.ColorScale.Cfvo[maxIdx].Val
+	}
+	format.MaxColor = "#" + f.getThemeColor(c.ColorScale.Color[maxIdx])
 	return format
 }
 
